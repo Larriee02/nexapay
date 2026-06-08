@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply font-sans antialiased bg-amber-50/30 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-orange-100/60 dark:border-slate-700/50;
+  }
+  .gradient-text {
+    @apply bg-gradient-to-r from-nexa-500 to-amber-500 bg-clip-text text-transparent;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-nexa-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-nexa-500/20 transition hover:bg-nexa-600 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-nexa-400 focus:ring-offset-2 dark:focus:ring-offset-slate-900;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-orange-50/60 hover:border-orange-200 active:scale-[0.98] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700;
+  }
+  .input-field {
+    @apply w-full rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-nexa-400 focus:ring-2 focus:ring-nexa-400/20 placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:focus:border-nexa-400;
+  }
+  .card {
+    @apply rounded-2xl border border-stone-200/70 bg-white p-6 shadow-card dark:border-slate-800 dark:bg-slate-900;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-orange-200 dark:bg-slate-700 rounded-full;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
