@@ -45,6 +45,14 @@ npm run build
 npm start
 ```
 
-The Node server serves the built frontend and `/api` on the same origin. A static-only Vercel or Netlify deployment cannot serve the Express or database routes. Run migrations against the deployment database before starting the application.
+The standalone Node server serves the built frontend and `/api` on the same origin. Run migrations against the deployment database before starting it.
+
+## Deploy to Vercel
+
+Import the repository using the Vite framework preset and the repository root. Vercel serves the static frontend from `dist` and runs the shared Express app as a Node function for `/api/*`.
+
+Connect a hosted PostgreSQL database and set its pooled, TLS-enabled connection string as the server-side `DATABASE_URL` for Production. The production build runs pending schema migrations using that connection. For Preview deployments, use a separate database, configure its `DATABASE_URL`, and run `npm run db:migrate` against it before testing.
+
+Provision the first administrator once using the hosted `DATABASE_URL`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in a trusted shell with `NODE_ENV=production npm run db:seed`. Customer accounts can register through the hosted signup page. Configure `SMTP_URL` and `MAIL_FROM` on Vercel to enable password recovery.
 
 Wallet transfers move simulated USD between NexaPay accounts. Bank integration and scheduled execution are outside this implementation. Cards, bill payments, notifications, merchant invoices and refunds, and the original fraud screen use sample data.
