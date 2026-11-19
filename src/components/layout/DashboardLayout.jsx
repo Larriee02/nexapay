@@ -3,28 +3,27 @@ import { Outlet } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
 import ThemeToggle from '../ui/ThemeToggle';
+import { useAuth } from '../../context/AuthContext';
+
+const workspaces = { customer: 'Personal workspace', merchant: 'Merchant workspace', admin: 'Administration' };
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="app-shell">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-200 bg-white/80 px-4 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/80">
-          <button
-            type="button"
-            className="rounded-xl p-2 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="h-5 w-5" />
+      <div className="min-w-0 lg:pl-64">
+        <header className="workspace-header">
+          <button type="button" className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden" onClick={() => setSidebarOpen(true)} aria-label="Open navigation">
+            <Menu size={22} />
           </button>
-          <div className="flex-1" />
+          <span className="text-sm font-semibold">{workspaces[user.role]}</span>
+          <span className="ml-auto text-xs font-medium text-slate-500">Demo environment</span>
           <ThemeToggle />
         </header>
-        <main className="p-4 sm:p-6 lg:p-8">
-          <Outlet />
-        </main>
+        <main className="mx-auto max-w-7xl p-4 sm:p-7 lg:p-9"><Outlet /></main>
       </div>
     </div>
   );

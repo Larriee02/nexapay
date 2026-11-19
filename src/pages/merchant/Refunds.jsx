@@ -5,7 +5,7 @@ import { formatCurrency, formatDate } from '../../utils/format';
 export default function Refunds() {
   return (
     <div>
-      <PageHeader title="Refunds" subtitle="Process and track customer refunds" />
+      <PageHeader title="Refunds" subtitle="Sample data · Process and track customer refunds" />
       <div className="space-y-4">
         {MERCHANT_REFUNDS.map((r) => (
           <div key={r.id} className="card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

@@ -5,7 +5,7 @@ import { formatCurrency, formatDate } from '../../utils/format';
 export default function Bills() {
   return (
     <div>
-      <PageHeader title="Bills" subtitle="Pay and manage recurring bills" action={<button type="button" className="btn-primary">Add bill</button>} />
+      <PageHeader title="Bills" subtitle="Sample data · Pay and manage recurring bills" action={<button type="button" className="btn-primary">Add bill</button>} />
       <div className="grid gap-4">
         {BILLS.map((b) => (
           <div key={b.id} className="card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

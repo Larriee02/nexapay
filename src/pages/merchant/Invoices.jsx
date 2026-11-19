@@ -7,7 +7,7 @@ export default function Invoices() {
 
   return (
     <div>
-      <PageHeader title="Invoices" subtitle="Create and track customer invoices" action={<button type="button" className="btn-primary">New invoice</button>} />
+      <PageHeader title="Invoices" subtitle="Sample data · Create and track customer invoices" action={<button type="button" className="btn-primary">New invoice</button>} />
       <div className="card overflow-hidden p-0">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 dark:bg-slate-800/50">

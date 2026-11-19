@@ -18,7 +18,7 @@ export default function MerchantDashboard() {
 
   return (
     <div>
-      <PageHeader title="Merchant Dashboard" subtitle="Overview of your business payments" />
+      <PageHeader title="Merchant Dashboard" subtitle="Sample data · Overview of your business payments" />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Revenue (May)" value={formatCurrency(19300)} change="+15.2%" icon={DollarSign} />
         <StatCard label="Pending" value={formatCurrency(pending)} icon={FileText} />

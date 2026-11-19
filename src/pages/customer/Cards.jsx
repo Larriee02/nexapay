@@ -9,7 +9,7 @@ export default function Cards() {
     <div>
       <PageHeader
         title="Cards"
-        subtitle="Manage virtual and physical cards"
+        subtitle="Sample data · Manage virtual and physical cards"
         action={<button type="button" className="btn-primary"><Plus className="h-4 w-4" /> New card</button>}
       />
       <div className="grid gap-6 md:grid-cols-2">

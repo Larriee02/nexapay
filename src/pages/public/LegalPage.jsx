@@ -5,25 +5,23 @@ const content = {
   privacy: {
     title: 'Privacy Policy',
     sections: [
-      { h: 'Data we collect', p: 'We collect information you provide directly, such as name, email, and payment details, plus usage data to improve our services.' },
-      { h: 'How we use data', p: 'Your data powers account services, fraud prevention, and product improvements. We never sell personal data to third parties.' },
-      { h: 'Your rights', p: 'You may access, correct, or delete your data at any time through Settings or by contacting support@nexapay.com.' },
+      { h: 'Data we collect', p: 'The app stores your account name, email, demo wallet activity, and the messages you send to support.' },
+      { h: 'How we use data', p: 'These records support sign-in, transfers, and help requests. Administrators can review account records, transfers, and support messages.' },
+      { h: 'Your rights', p: 'You can update your display name in Settings. Use the contact page to request help with other account information.' },
     ],
   },
   terms: {
-    title: 'Terms of Service',
+    title: 'Demo terms',
     sections: [
-      { h: 'Acceptance', p: 'By using NexaPay, you agree to these terms and our Privacy Policy.' },
+      { h: 'Demo funds', p: 'Wallet balances and transfers are simulated. They have no monetary value.' },
       { h: 'Account responsibilities', p: 'You are responsible for maintaining the security of your account credentials and all activity under your account.' },
-      { h: 'Service availability', p: 'We strive for 99.99% uptime but do not guarantee uninterrupted access. Fees are disclosed at checkout.' },
     ],
   },
   security: {
     title: 'Security',
     sections: [
-      { h: 'Encryption', p: 'All data in transit uses TLS 1.3. Sensitive data at rest is encrypted with AES-256.' },
-      { h: 'Authentication', p: 'We support 2FA, biometric login on mobile, and session management with automatic timeout.' },
-      { h: 'Compliance', p: 'NexaPay maintains PCI DSS Level 1 certification and undergoes annual third-party audits.' },
+      { h: 'Passwords and sessions', p: 'NexaPay hashes passwords on the server and uses an HTTP-only cookie to identify your session.' },
+      { h: 'Workspace access', p: 'The server checks account roles and limits access to wallet activity and support tickets.' },
     ],
   },
 };
@@ -34,7 +32,7 @@ export default function LegalPage() {
   const page = content[key] || content.privacy;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-24 pt-32">
+    <div className="mx-auto max-w-3xl px-6 py-16 sm:py-24">
       <PageHeader title={page.title} />
       <div className="space-y-8">
         {page.sections.map((s) => (

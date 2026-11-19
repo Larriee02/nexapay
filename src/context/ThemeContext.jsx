@@ -22,4 +22,4 @@ export function ThemeProvider({ children }) {
   );
 }
 
-export const useTheme = () => useContext(ThemeContext);
+export const useTheme = () => useContext(ThemeContext); // eslint-disable-line react-refresh/only-export-components

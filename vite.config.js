@@ -11,8 +11,8 @@ export default defineConfig({
       manifest: {
         name: 'NexaPay',
         short_name: 'NexaPay',
-        description: 'Modern fintech payments platform',
-        theme_color: '#0ea5e9',
+        description: 'NexaPay demo wallet',
+        theme_color: '#5540bd',
         background_color: '#0f172a',
         display: 'standalone',
         icons: [
@@ -20,6 +20,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        navigateFallbackDenylist: [/^\/api(?:\/|$)/],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
       },
     }),

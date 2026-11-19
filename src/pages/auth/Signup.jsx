@@ -1,47 +1,40 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Feedback } from '../../components/ui/Feedback';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Signup() {
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
-  const { signup } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const { authenticate } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  async function handleSubmit(event) {
+    event.preventDefault();
     setError('');
-    const result = signup(form);
-    if (!result.ok) {
-      setError(result.error);
-      return;
+    setBusy(true);
+    try {
+      await authenticate('signup', Object.fromEntries(new FormData(event.currentTarget)));
+      navigate('/dashboard', { replace: true });
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setBusy(false);
     }
-    navigate('/otp', { state: { email: form.email } });
-  };
+  }
 
   return (
     <>
-      <h1 className="font-display text-2xl font-bold">Create account</h1>
-      <p className="mt-1 text-slate-500">Start your NexaPay journey</p>
+      <h1 className="font-display text-4xl font-semibold tracking-tight">Create an account</h1>
+      <p className="mt-2 text-slate-500">Open a NexaPay demo wallet.</p>
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-        {error && <div className="rounded-xl bg-red-50 p-3 text-sm text-red-600 dark:bg-red-950/50">{error}</div>}
-        <div>
-          <label className="mb-1 block text-sm font-medium">Full name</label>
-          <input className="input-field" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">Email</label>
-          <input type="email" className="input-field" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">Password</label>
-          <input type="password" className="input-field" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={6} />
-        </div>
-        <button type="submit" className="btn-primary w-full">Continue</button>
+        <Feedback error={error} />
+        <label className="field-label">Full name<input name="name" autoComplete="name" className="input-field" maxLength={100} required /></label>
+        <label className="field-label">Email<input name="email" type="email" autoComplete="email" className="input-field" maxLength={254} required /></label>
+        <label className="field-label">Password<input name="password" type="password" autoComplete="new-password" className="input-field" minLength={8} maxLength={128} required /></label>
+        <button className="btn-primary w-full" disabled={busy}>{busy ? 'Creating account…' : 'Create account'}</button>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-500">
-        Have an account? <Link to="/login" className="text-nexa-500 font-medium hover:underline">Sign in</Link>
-      </p>
+      <p className="mt-6 text-center text-sm text-slate-500">Already registered? <Link to="/login" className="font-semibold text-nexa-600 dark:text-nexa-300">Sign in</Link></p>
     </>
   );
 }

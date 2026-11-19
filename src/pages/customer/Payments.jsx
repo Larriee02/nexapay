@@ -1,112 +1,115 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Send, Download, ArrowLeftRight, Calendar, QrCode } from 'lucide-react';
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Calendar, QrCode } from 'lucide-react';
 import PageHeader from '../../components/ui/PageHeader';
+import { Feedback, ResourceState } from '../../components/ui/Feedback';
+import { useAuth } from '../../context/AuthContext';
+import { api } from '../../utils/api';
 import { formatCurrency } from '../../utils/format';
-import { storage } from '../../utils/storage';
+import { useResource } from '../../utils/useResource';
 
 const tabs = [
-  { id: 'send', label: 'Send', icon: Send },
-  { id: 'receive', label: 'Receive', icon: Download },
-  { id: 'transfer', label: 'Transfer', icon: ArrowLeftRight },
-  { id: 'scheduled', label: 'Scheduled', icon: Calendar },
-  { id: 'qr', label: 'QR Pay', icon: QrCode },
+  ['send', 'Send', ArrowUpRight],
+  ['receive', 'Request', ArrowDownLeft],
+  ['transfer', 'Transfer', ArrowLeftRight],
+  ['scheduled', 'Scheduled', Calendar],
+  ['qr', 'QR code', QrCode],
 ];
+
+function Receive({ qr, email }) {
+  const [image, setImage] = useState('');
+  const [notice, setNotice] = useState({});
+  const url = new URL('/payments', window.location.origin);
+  url.searchParams.set('recipient', email);
+  const link = url.href;
+  useEffect(() => {
+    if (!qr) return;
+    let active = true;
+    import('qrcode').then(({ default: generator }) => generator.toDataURL(link, { width: 208, margin: 2 }))
+      .then((source) => { if (active) setImage(source); })
+      .catch(() => { if (active) setNotice({ error: 'The QR code could not be generated.' }); });
+    return () => { active = false; };
+  }, [qr, link]);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(link);
+      setNotice({ message: 'Payment link copied.' });
+    } catch {
+      setNotice({ error: 'Copy the link from the field below.' });
+    }
+  }
+
+  return (
+    <section className="card space-y-4">
+      <h2 className="section-title">{qr ? 'Payment QR code' : 'Request a wallet payment'}</h2>
+      <p className="text-sm text-slate-500">Share this link with someone who has a NexaPay wallet.</p>
+      {qr && image && <img src={image} width={208} height={208} alt="QR code for your wallet payment link" className="rounded-xl" />}
+      <Feedback {...notice} />
+      <label className="field-label">Payment link<input className="input-field" readOnly value={link} onFocus={(event) => event.currentTarget.select()} /></label>
+      <button className="btn-primary" onClick={copy}>Copy payment link</button>
+    </section>
+  );
+}
+
+function PaymentForm({ tab, recipient, onPaid }) {
+  const [notice, setNotice] = useState({});
+  const [busy, setBusy] = useState(false);
+  const request = useRef(null);
+
+  async function submit(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const body = { ...Object.fromEntries(new FormData(form)), type: tab };
+    const fingerprint = JSON.stringify(body);
+    if (request.current?.fingerprint !== fingerprint) {
+      request.current = { fingerprint, id: crypto.randomUUID() };
+    }
+    setNotice({});
+    setBusy(true);
+    try {
+      await api('/ledger', { method: 'POST', body: { ...body, requestId: request.current.id } });
+      request.current = null;
+      form.reset();
+      setNotice({ message: 'Payment completed. You can see it in Transactions.' });
+      onPaid();
+    } catch (error) {
+      setNotice({ error: error.message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form className="card space-y-5" onSubmit={submit}>
+      <h2 className="section-title">{tab === 'transfer' ? 'Transfer between wallets' : 'Send a payment'}</h2>
+      <Feedback {...notice} />
+      <label className="field-label">Recipient email<input className="input-field" name="recipient" type="email" defaultValue={recipient} placeholder="name@example.com" required /></label>
+      <label className="field-label">Amount in USD<input className="input-field" name="amount" type="number" inputMode="decimal" min="0.01" max="9999999.99" step="0.01" placeholder="0.00" required /></label>
+      <button className="btn-primary" disabled={busy}>{busy ? 'Processing…' : 'Confirm payment'}</button>
+    </form>
+  );
+}
 
 export default function Payments() {
   const [params, setParams] = useSearchParams();
-  const tab = params.get('tab') || 'send';
-  const [amount, setAmount] = useState('');
-  const [recipient, setRecipient] = useState('');
-  const [message, setMessage] = useState('');
-
-  const handlePay = (e) => {
-    e.preventDefault();
-    const payments = storage.get('payments', []);
-    payments.unshift({
-      id: Date.now(),
-      type: tab,
-      amount: parseFloat(amount),
-      recipient,
-      date: new Date().toISOString(),
-    });
-    storage.set('payments', payments);
-    setMessage(`Payment of ${formatCurrency(parseFloat(amount))} submitted successfully!`);
-    setAmount('');
-    setRecipient('');
-  };
+  const tab = tabs.some(([id]) => id === params.get('tab')) ? params.get('tab') : 'send';
+  const { user } = useAuth();
+  const wallet = useResource('/ledger');
 
   return (
     <div>
-      <PageHeader title="Payments" subtitle="Send, receive, transfer, and schedule payments" />
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-4 dark:border-slate-800">
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setParams({ tab: id })}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
-              tab === id ? 'bg-nexa-500 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-            }`}
-          >
-            <Icon className="h-4 w-4" /> {label}
-          </button>
-        ))}
+      <PageHeader title="Payments" subtitle="Move demo funds between NexaPay wallets." />
+      <div className="segment-bar" aria-label="Payment options">
+        {tabs.map(([id, label, Icon]) => <button className="segment" key={id} type="button" aria-pressed={tab === id} onClick={() => setParams({ tab: id })}><Icon size={16} aria-hidden="true" />{label}</button>)}
       </div>
-      <div className="mt-8 grid gap-8 lg:grid-cols-2">
-        {tab === 'qr' ? (
-          <div className="card flex flex-col items-center justify-center p-12">
-            <div className="grid h-48 w-48 grid-cols-8 gap-1 rounded-xl bg-slate-900 p-4">
-              {Array.from({ length: 64 }).map((_, i) => (
-                <div key={i} className={`rounded-sm ${i % 3 === 0 ? 'bg-white' : 'bg-slate-700'}`} />
-              ))}
-            </div>
-            <p className="mt-6 font-semibold">Scan to pay Alex Morgan</p>
-            <p className="text-sm text-slate-500">nexapay://pay/alex-morgan</p>
-          </div>
-        ) : tab === 'scheduled' ? (
-          <div className="card lg:col-span-2">
-            <h3 className="font-semibold">Scheduled payments</h3>
-            <ul className="mt-4 space-y-3">
-              {[
-                { name: 'Rent', amount: 1200, date: 'Jun 1, 2026' },
-                { name: 'Netflix', amount: 15.99, date: 'Jun 24, 2026' },
-              ].map((s) => (
-                <li key={s.name} className="flex justify-between rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50">
-                  <span>{s.name}</span>
-                  <span className="font-semibold">{formatCurrency(s.amount)} · {s.date}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : tab === 'receive' ? (
-          <div className="card lg:col-span-2 text-center p-12">
-            <p className="text-slate-500">Your receive link</p>
-            <p className="mt-2 font-mono text-lg text-nexa-500">pay.nexapay.com/u/alex-morgan</p>
-            <button type="button" className="btn-primary mt-6">Copy link</button>
-          </div>
-        ) : (
-          <form onSubmit={handlePay} className="card space-y-4">
-            <h3 className="font-semibold capitalize">{tab} money</h3>
-            {message && <div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700 dark:bg-emerald-950/50">{message}</div>}
-            <div>
-              <label className="mb-1 block text-sm font-medium">Amount</label>
-              <input type="number" step="0.01" className="input-field" value={amount} onChange={(e) => setAmount(e.target.value)} required />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">{tab === 'transfer' ? 'To account' : 'Recipient'}</label>
-              <input className="input-field" value={recipient} onChange={(e) => setRecipient(e.target.value)} required placeholder="email or account" />
-            </div>
-            <button type="submit" className="btn-primary w-full">Confirm {tab}</button>
-          </form>
-        )}
-        {tab !== 'scheduled' && tab !== 'receive' && (
-          <div className="card">
-            <h3 className="font-semibold">From wallet</h3>
-            <p className="mt-2 font-display text-3xl font-bold">{formatCurrency(24580.42)}</p>
-            <p className="text-sm text-slate-500">Available balance</p>
-          </div>
-        )}
+      <div className="mt-6 grid items-start gap-5 lg:grid-cols-[1.4fr_1fr]">
+        {tab === 'receive' || tab === 'qr' ? <Receive key={tab} qr={tab === 'qr'} email={user.email} />
+          : tab === 'scheduled' ? <section className="card"><h2 className="section-title">Scheduled payments</h2><p className="mt-3 text-sm text-slate-500">Scheduling is unavailable. Use Send to make a payment now.</p></section>
+          : <PaymentForm key={`${tab}:${params.get('recipient') || ''}`} tab={tab} recipient={params.get('recipient') || ''} onPaid={wallet.refresh} />}
+        <ResourceState {...wallet}>
+          <div className="balance-panel"><p>Available balance</p><strong>{formatCurrency(Number(wallet.data?.balance) / 100)}</strong><span>USD wallet · Demo funds</span></div>
+        </ResourceState>
       </div>
     </div>
   );

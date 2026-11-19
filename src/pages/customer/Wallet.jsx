@@ -1,29 +1,22 @@
-import { Plus, ArrowDownToLine } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { ResourceState } from '../../components/ui/Feedback';
 import PageHeader from '../../components/ui/PageHeader';
 import { formatCurrency } from '../../utils/format';
+import { useResource } from '../../utils/useResource';
 
 export default function Wallet() {
-  const accounts = [
-    { name: 'Primary Wallet', balance: 24580.42, currency: 'USD' },
-    { name: 'Savings', balance: 12500, currency: 'USD' },
-    { name: 'EUR Wallet', balance: 3200, currency: 'EUR' },
-  ];
-
+  const wallet = useResource('/ledger');
   return (
     <div>
-      <PageHeader title="Wallet" subtitle="Manage balances across accounts" />
-      <div className="grid gap-4 md:grid-cols-3">
-        {accounts.map((a) => (
-          <div key={a.name} className="card">
-            <p className="text-sm text-slate-500">{a.name}</p>
-            <p className="mt-2 font-display text-2xl font-bold">{formatCurrency(a.balance, a.currency)}</p>
-            <div className="mt-4 flex gap-2">
-              <button type="button" className="btn-secondary flex-1 text-xs"><Plus className="h-4 w-4" /> Add</button>
-              <button type="button" className="btn-secondary flex-1 text-xs"><ArrowDownToLine className="h-4 w-4" /> Withdraw</button>
-            </div>
-          </div>
-        ))}
-      </div>
+      <PageHeader title="Wallet" subtitle="View your USD demo balance." />
+      <ResourceState {...wallet}>
+        <section className="balance-panel max-w-xl"><p>Available balance</p><strong>{formatCurrency(Number(wallet.data?.balance) / 100)}</strong><span>USD wallet · Demo funds</span></section>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link className="btn-primary" to="/payments"><ArrowUpRight size={18} />Send</Link>
+          <Link className="btn-secondary" to="/payments?tab=receive"><ArrowDownLeft size={18} />Request</Link>
+        </div>
+      </ResourceState>
     </div>
   );
 }

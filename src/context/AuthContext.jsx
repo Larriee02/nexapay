@@ -1,99 +1,66 @@
-import { createContext, useContext, useState, useCallback } from 'react';
-import { DEMO_USERS } from '../data/mockData';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { api } from '../utils/api';
 import { storage } from '../utils/storage';
 
 const AuthContext = createContext(null);
+const dashboardPath = (role) => ({ merchant: '/merchant', admin: '/admin' })[role] || '/dashboard';
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => storage.get('user', null));
-  const [pendingEmail, setPendingEmail] = useState(null);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [sessionError, setSessionError] = useState('');
+  const [attempt, setAttempt] = useState(0);
 
-  const persist = (u) => {
-    setUser(u);
-    if (u) storage.set('user', u);
-    else storage.remove('user');
-  };
-
-  const login = useCallback((email, password) => {
-    const found = DEMO_USERS.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
-    if (!found) return { ok: false, error: 'Invalid email or password' };
-    const { password: _, ...safe } = found;
-    persist(safe);
-    return { ok: true, user: safe };
-  }, []);
-
-  const signup = useCallback((data) => {
-    const exists = DEMO_USERS.some((u) => u.email.toLowerCase() === data.email.toLowerCase());
-    if (exists) return { ok: false, error: 'Email already registered' };
-    setPendingEmail(data.email);
-    storage.set('pendingSignup', data);
-    return { ok: true, needsOtp: true };
-  }, []);
-
-  const verifyOtp = useCallback((_code) => {
-    const pending = storage.get('pendingSignup');
-    const email = pendingEmail || pending?.email;
-    if (!email && !user) {
-      const otpEmail = storage.get('otpEmail');
-      if (otpEmail) {
-        persist({ id: 'new', email: otpEmail, role: 'customer', name: otpEmail.split('@')[0], avatar: 'NP' });
-        storage.remove('otpEmail');
-        return { ok: true };
+  useEffect(() => {
+    const controller = new AbortController();
+    for (const key of ['user', 'pendingSignup', 'otpEmail', 'payments']) {
+      try {
+        storage.remove(key);
+      } catch {
+        break;
       }
     }
-    if (pending) {
-      const newUser = {
-        id: `u_${Date.now()}`,
-        email: pending.email,
-        role: 'customer',
-        name: pending.name || pending.email.split('@')[0],
-        avatar: (pending.name || 'U').slice(0, 2).toUpperCase(),
-      };
-      persist(newUser);
-      storage.remove('pendingSignup');
-      setPendingEmail(null);
-      return { ok: true, user: newUser };
-    }
-    if (user || email) return { ok: true };
-    return { ok: true };
-  }, [pendingEmail, user]);
+    api('/auth/session', { signal: controller.signal }).then(
+      (session) => { setUser(session.user); setLoading(false); },
+      (error) => {
+        if (!controller.signal.aborted) {
+          setSessionError(error.message);
+          setLoading(false);
+        }
+      },
+    );
+    return () => controller.abort();
+  }, [attempt]);
 
-  const requestOtp = useCallback((email) => {
-    storage.set('otpEmail', email);
-    setPendingEmail(email);
-    return { ok: true };
-  }, []);
+  async function authenticate(path, body) {
+    const session = await api(`/auth/${path}`, { method: 'POST', body });
+    setUser(session.user);
+    setSessionError('');
+    return session.user;
+  }
 
-  const logout = useCallback(() => {
-    persist(null);
-    setPendingEmail(null);
-  }, []);
+  async function updateProfile(body) {
+    const profile = await api('/auth/profile', { method: 'PATCH', body });
+    setUser(profile.user);
+  }
 
-  const dashboardPath = (role) => {
-    if (role === 'merchant') return '/merchant';
-    if (role === 'admin') return '/admin';
-    return '/dashboard';
-  };
+  async function logout() {
+    await api('/auth/logout', { method: 'POST' });
+    setUser(null);
+  }
+
+  function retrySession() {
+    setLoading(true);
+    setSessionError('');
+    setAttempt((value) => value + 1);
+  }
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        signup,
-        verifyOtp,
-        requestOtp,
-        logout,
-        pendingEmail,
-        dashboardPath,
-        isAuthenticated: !!user,
-      }}
-    >
+    <AuthContext.Provider value={{ user, loading, sessionError, retrySession, authenticate, updateProfile, logout, dashboardPath }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+// The provider and consumer hook share the same context.
+export const useAuth = () => useContext(AuthContext); // eslint-disable-line react-refresh/only-export-components

@@ -4,7 +4,7 @@ import { NOTIFICATIONS } from '../../data/mockData';
 export default function Notifications() {
   return (
     <div>
-      <PageHeader title="Notifications" subtitle="Stay updated on your account activity" />
+      <PageHeader title="Notifications" subtitle="Sample data · Stay updated on your account activity" />
       <ul className="space-y-3">
         {NOTIFICATIONS.map((n) => (
           <li

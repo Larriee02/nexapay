@@ -1,77 +1,50 @@
 # NexaPay
 
-Modern fintech payments platform built with React 18, Vite, Tailwind CSS, Framer Motion, and Recharts.
+NexaPay is a full-stack demo wallet. React and Vite power the interface, Express serves the same-origin API, and PostgreSQL stores accounts, sessions, wallets, transfers, tickets, and contact messages.
 
-## Quick start
+## Run locally
+
+Use Node.js 22.12 or newer and Docker Compose.
 
 ```bash
-npm install
+cp .env.example .env
+npm ci
+docker compose up -d --wait
+npm run db:migrate
+npm run db:seed
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
+Open [NexaPay](http://localhost:5173) or [the admin workspace](http://localhost:5173/admin). PostgreSQL listens locally on port 55432. Compose uses a named volume, so the database survives container restarts.
 
-## Demo accounts
+| Role | Email | Local password |
+| --- | --- | --- |
+| Customer with demo funds | alex@demo.com | demo123 |
+| Second customer wallet | jamie@demo.com | demo123 |
+| Merchant | biz@demo.com | demo123 |
+| Administrator | admin@demo.com | demo123 |
 
-| Email | Password | Role |
-|-------|----------|------|
-| alex@demo.com | demo123 | Customer |
-| biz@demo.com | demo123 | Merchant |
-| admin@demo.com | demo123 | Admin |
+To try both sides of a transfer, sign in as Alex, send a small amount to Jamie, then check each account's Transactions page. You can also create an account with a zero-balance wallet and send it funds from a seeded wallet.
 
-OTP verification accepts **any 6-digit code**.
+The admin workspace includes account listings, transfer activity, monthly metrics, the shared ticket queue, and an inbox for public contact submissions. The contact form confirms receipt after the database stores the message. Admins read messages in the inbox.
 
-## Scripts
+## Configuration
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start dev server |
-| `npm run build` | Production build |
-| `npm run preview` | Preview production build |
-| `npm run lint` | Run ESLint |
-| `npm run deploy:vercel` | Deploy to Vercel |
-| `npm run deploy:netlify` | Deploy to Netlify |
+- `DATABASE_URL` points to a PostgreSQL database. Compose credentials are for local development.
+- `SMTP_URL` and `MAIL_FROM` enable password recovery. The mail service delivers a time-limited, single-use recovery code.
+- `HOST` and `PORT` control the HTTP listener. The default interface is loopback.
+- `SECURE_COOKIES=true` enforces HTTPS cookies. `NODE_ENV=production` also enables this.
+- `TRUST_PROXY_HOPS` is optional. Set it to the number of trusted proxy hops in front of the Node server only if your deployment uses one.
+- To provision a non-demo admin, set `ADMIN_EMAIL` and `ADMIN_PASSWORD` before running `npm run db:seed`. Use a fresh database for hosted deployments and keep demo seed accounts local.
 
-## Features
-
-- **Landing**: Hero parallax, scroll progress, stats, features, pricing, testimonials, FAQ
-- **Customer**: Dashboard, payments (send/receive/transfer/scheduled/QR), cards, analytics, transactions, bills, wallet, notifications, settings
-- **Merchant**: Dashboard, invoices, refunds
-- **Admin**: Dashboard, users, fraud, analytics
-- **Public**: Privacy, terms, security, contact
-- Dark/light theme, PWA, responsive sidebar layout
-- Mock data in `src/data/mockData.js`, auth state in `localStorage`
-
-## Deployment
-
-### Vercel
+## Production build
 
 ```bash
+npm run lint
 npm run build
-npm run deploy:vercel
+npm start
 ```
 
-Uses `vercel.json` SPA rewrites.
+The Node server serves the built frontend and `/api` on the same origin. A static-only Vercel or Netlify deployment cannot serve the Express or database routes. Run migrations against the deployment database before starting the application.
 
-### Netlify
-
-```bash
-npm run build
-npm run deploy:netlify
-```
-
-Uses `netlify.toml` and `public/_redirects`.
-
-## Tech stack
-
-- Vite 5 + React 18
-- Tailwind CSS 3
-- Framer Motion 11
-- React Router 6
-- Recharts
-- Lucide React
-- vite-plugin-pwa
-
-## License
-
-MIT
+Wallet transfers move simulated USD between NexaPay accounts. Bank integration and scheduled execution are outside this implementation. Cards, bill payments, notifications, merchant invoices and refunds, and the original fraud screen use sample data.
