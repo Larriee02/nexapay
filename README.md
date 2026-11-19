@@ -51,7 +51,7 @@ The standalone Node server serves the built frontend and `/api` on the same orig
 
 Import the repository using the Vite framework preset and the repository root. Vercel serves the static frontend from `dist` and runs the shared Express app as a Node function for `/api/*`.
 
-Connect a hosted PostgreSQL database and set its pooled, TLS-enabled connection string as the server-side `DATABASE_URL` for Production. The production build runs pending schema migrations using that connection. For Preview deployments, use a separate database, configure its `DATABASE_URL`, and run `npm run db:migrate` against it before testing.
+With no database configured, Vercel serves the public preview and reports database-backed features as unavailable. To enable those features, connect a hosted PostgreSQL database and set its pooled, TLS-enabled connection string as the server-side `DATABASE_URL` for Production. The production build runs pending schema migrations using that connection. For Preview deployments, use a separate database, configure its `DATABASE_URL`, and run `npm run db:migrate` against it before testing.
 
 Provision the first administrator once using the hosted `DATABASE_URL`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in a trusted shell with `NODE_ENV=production npm run db:seed`. Customer accounts can register through the hosted signup page. Configure `SMTP_URL` and `MAIL_FROM` on Vercel to enable password recovery.
 

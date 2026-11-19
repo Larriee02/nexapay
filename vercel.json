@@ -1,10 +1,16 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "buildCommand": "npm run build && if [ \"$VERCEL_ENV\" = production ]; then npm run db:migrate; fi",
+  "buildCommand": "npm run build && if [ \"$VERCEL_ENV\" = production ] && [ -n \"$DATABASE_URL\" ]; then npm run db:migrate; fi",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api" },
-    { "source": "/((?!api(?:/|$)).*)", "destination": "/index.html" }
+    {
+      "source": "/api/:path*",
+      "destination": "/api"
+    },
+    {
+      "source": "/((?!api(?:/|$)).*)",
+      "destination": "/index.html"
+    }
   ]
 }
